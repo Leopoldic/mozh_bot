@@ -17,7 +17,7 @@ class FontankaLoader(MozhaikaLoader):
     def get_urls(self):
         resp = requests.get(
             f'{self.main_url}/24hours.html',
-            proxies=self.get_random_proxie()
+            proxies=MozhaikaLoader.get_random_proxie()
             )
         data = bs(resp.text, 'html.parser')
         
@@ -38,7 +38,7 @@ class FontankaLoader(MozhaikaLoader):
         logger.debug(f"Фонтанка проверяется: {self.main_url}{url_path}")
         resp = requests.get(
             f'{self.main_url}{url_path}',
-            proxies=self.get_random_proxie()
+            proxies=MozhaikaLoader.get_random_proxie()
             )
         data = bs(resp.text, 'html.parser')
         text_parts = data.find_all('div',{'class':'FNh F3b3'})

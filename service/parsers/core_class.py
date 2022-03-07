@@ -18,11 +18,14 @@ class MozhaikaLoader(ABC):
     def get_by_time_interval(self):
         raise NotImplementedError
 
-    def get_random_proxie(self):
+    @staticmethod
+    def get_random_proxie():
         return n_proxies.get_random_proxy()
 
-    def check_mozhaika(self, news_url):
-        news = self.get_text(news_url)
+    def check_mozhaika(self, news_data):
+        if news_data is None:
+            return False
+        news = self.get_text(news_data)
         keywords = [
                 'можайка', 'можайского','а.ф.можайского', 'ф.можайского', 'военно-космичаская'
                     ]       

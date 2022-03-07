@@ -19,8 +19,8 @@ loader_yandex = YandexLoader()
 def commands(message):
         
     def send_news():
-        news_fontanka, count_fontanka = loader_fontanka.get_by_time_interval()
         news_yandex, count_yandex = loader_yandex.get_by_time_interval()
+        news_fontanka, count_fontanka = loader_fontanka.get_by_time_interval()
 
         if len(news_fontanka) > 0:
             for i in range(len(news_fontanka))[::-1]:
