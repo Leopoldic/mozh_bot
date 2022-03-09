@@ -5,28 +5,31 @@ import pandas as pd
 from bs4 import BeautifulSoup as bs
 from datetime import datetime, timedelta
 from loguru import logger
-
 from service.parsers.core_class import MozhaikaLoader
 
 
-class FontankaLoader(MozhaikaLoader):
-    
+class AbnNewsLoader(MozhaikaLoader):
     def __init__(self):
-        self.main_url = 'https://www.fontanka.ru'
+        self.main_url = 'https://abnews.ru'
         
     def get_urls(self):
         resp = requests.get(
-            f'{self.main_url}/24hours.html',
+            f'{self.main_url}/tape',
             proxies=MozhaikaLoader.get_random_proxie()
             )
         data = bs(resp.text, 'html.parser')
         
         self.urls_by_time = pd.DataFrame(columns=['urls','time'])
         self.urls_by_time['time'] = [
-            i.text for i in data.find_all('time', {'class':"CBfp"})
-        ]        
+            str(i.text).split(" ")[-1].strip() for i in data.find_all('div', {'class':"news__foot"})
+        ]
+
+        logger.debug(self.urls_by_time['time'])
+        
         self.urls_by_time['urls'] = [
-            i.get('href') for i in data.find_all('a', {'class':"CBi3"})
+            i.get('href') for i in data.find_all(
+                'a', {'class':"news__item news__item--small"}
+                )
         ]
         
         if len(self.urls_by_time['urls'])==0:
@@ -35,15 +38,14 @@ class FontankaLoader(MozhaikaLoader):
             self.get_urls()
 
     def get_text(self,url_path):
-        logger.debug(f"Фонтанка проверяется: {self.main_url}{url_path}")
+        logger.debug(f"АБН новости проверяются: {url_path}")
         resp = requests.get(
-            f'{self.main_url}{url_path}',
+            f'{url_path}',
             proxies=MozhaikaLoader.get_random_proxie()
             )
         data = bs(resp.text, 'html.parser')
-        text_parts = data.find_all('div',{'class':'FNh F3b3'})
-        header_h1 = data.find_all('p', {'itemprop': 'http://schema.org/headline'})
-        header_h2 = data.find_all('div', {'class': 'CVn9'})
+        text_parts = data.find_all('div',{'class':'article__text'})
+        header_h1 = data.find_all('p', {'class': 'news__name'})
 
         if len(text_parts) == 0:
             logger.debug('Сработала защита от ботов')
@@ -51,7 +53,6 @@ class FontankaLoader(MozhaikaLoader):
             self.get_text(url_path)
 
         return f"{' '.join([i.text for i in header_h1])}\
-                    {' '.join([i.text for i in header_h2])}\
                     {' '.join([i.text for i in text_parts])}"
     
     def get_by_time_interval(self):
@@ -63,7 +64,6 @@ class FontankaLoader(MozhaikaLoader):
                             )]
         count_rez = len(rez)
         if count_rez > 0:
-            rez = rez[rez['urls'].apply(lambda x: len(x)<25)]
             rez = rez[rez['urls'].apply(lambda x: self.check_mozhaika(x))]
             rez['urls'] = rez['urls'].apply(lambda x: f'{self.main_url}{x}')
         return rez, count_rez
