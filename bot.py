@@ -111,7 +111,7 @@ def commands(message):
     for i in users_id:
         bot.send_message(i, 'Хэй мистер, я стартанул') 
     bot.send_message(message.from_user.id, f"Вы запустили бота. Вся информация в группе {channel_id}")
-    schedule.every(1).minute.do(send_news)
+    schedule.every(1).hour.do(send_news)
     while True:
         schedule.run_pending()
         time.sleep(1)
