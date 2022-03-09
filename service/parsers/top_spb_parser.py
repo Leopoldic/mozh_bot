@@ -5,45 +5,44 @@ import pandas as pd
 from bs4 import BeautifulSoup as bs
 from datetime import datetime, timedelta
 from loguru import logger
+
 from service.parsers.core_class import MozhaikaLoader
 
 
-class AbnNewsLoader(MozhaikaLoader):
+
+class TopSpb(MozhaikaLoader):
+    
     def __init__(self):
-        self.main_url = 'https://abnews.ru'
+        self.main_url = 'https://topspb.tv'
         
     def get_urls(self):
-        resp = requests.get(
-            f'{self.main_url}/tape',
-            proxies=MozhaikaLoader.get_random_proxie()
-            )
-        data = bs(resp.text, 'html.parser')
-        
-        self.urls_by_time = pd.DataFrame(columns=['urls','time'])
-        self.urls_by_time['time'] = [
-            str(i.text).split(" ")[-1].strip() for i in data.find_all('div', {'class':"news__foot"})
-        ]
-        
-        self.urls_by_time['urls'] = [
-            i.get('href') for i in data.find_all(
-                'a', {'class':"news__item news__item--small"}
+            resp = requests.get(
+                f'{self.main_url}/news'
                 )
-        ]
-        
-        if len(self.urls_by_time['urls'])==0:
-            logger.debug('Сработала защита от ботов')
-            time.sleep(5)
-            self.get_urls()
+            data = bs(resp.text, 'html.parser')
 
+            self.urls_by_time = pd.DataFrame(columns=['urls','time'])
+            self.urls_by_time['time'] = [
+                i.find("b").text.replace(",", "") for i in data.find_all('time')
+            ]        
+            self.urls_by_time['urls'] = [ 
+                i.get('href') for i in data.find("div", class_="news-list").find_all("a", class_="news-item-media") if len(i.get('href'))
+            ]
+            
+            if len(self.urls_by_time['urls'])==0:
+                logger.debug('Сработала защита от ботов')
+                time.sleep(5)
+                self.get_urls()
+            
     def get_text(self,url_path):
-        logger.debug(f"АБН новости проверяются: {url_path}")
+        logger.debug(f"Источник Санкт-Петербург проверяется: {self.main_url}{url_path}")
         resp = requests.get(
-            f'{url_path}',
+            f'{self.main_url}{url_path}',
             proxies=MozhaikaLoader.get_random_proxie()
             )
         data = bs(resp.text, 'html.parser')
-        text_parts = data.find_all('div',{'class':'article__text'})
-        header_h1 = data.find_all('p', {'class': 'news__name'})
+        text_parts = data.find_all('div',{'class':'article-body'})
+        header_h1 = data.find_all('h1', {'itemprop': 'name'})
 
         if len(text_parts) == 0:
             logger.debug('Сработала защита от ботов')
@@ -51,7 +50,8 @@ class AbnNewsLoader(MozhaikaLoader):
             self.get_text(url_path)
 
         return f"{' '.join([i.text for i in header_h1])}\
-                    {' '.join([i.text for i in text_parts])}"
+                {' '.join([i.text for i in text_parts])}"
+
     
     def get_by_time_interval(self):
         self.get_urls()
