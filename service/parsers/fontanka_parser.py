@@ -13,6 +13,7 @@ class FontankaLoader(MozhaikaLoader):
     
     def __init__(self):
         self.main_url = 'https://www.fontanka.ru'
+        self.count = 0
         
     def get_urls(self):
         resp = requests.get(
@@ -29,10 +30,18 @@ class FontankaLoader(MozhaikaLoader):
             i.get('href') for i in data.find_all('a', {'class':"CBi3"})
         ]
         
+        
         if len(self.urls_by_time['urls'])==0:
-            logger.debug('Сработала защита от ботов')
-            time.sleep(5)
-            self.get_urls()
+            logger.debug('Фонтанка Сработала защита от ботов 1')
+            self.count+=1
+            if self.count >= 20:
+                self.urls_by_time['time'] = None
+                self.urls_by_time['urls'] = None
+                self.count = 0
+            else:
+                time.sleep(5)
+                self.get_urls()
+        
 
     def get_text(self,url_path):
         logger.debug(f"Фонтанка проверяется: {self.main_url}{url_path}")
@@ -46,7 +55,7 @@ class FontankaLoader(MozhaikaLoader):
         header_h2 = data.find_all('div', {'class': 'CVn9'})
 
         if len(text_parts) == 0:
-            logger.debug('Сработала защита от ботов')
+            logger.debug('Фонтанка Сработала защита от ботов 2')
             time.sleep(5)
             self.get_text(url_path)
 

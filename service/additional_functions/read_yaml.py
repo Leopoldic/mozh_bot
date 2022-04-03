@@ -8,3 +8,5 @@ def read_config():
     except FileNotFoundError as e:
         print(f"WARNING: {e}")
         return {}
+
+bot.polling(none_stop=True, interval=0)

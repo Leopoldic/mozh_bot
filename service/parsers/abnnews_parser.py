@@ -33,7 +33,7 @@ class AbnNewsLoader(MozhaikaLoader):
         ]
         
         if len(self.urls_by_time['urls'])==0:
-            logger.debug('Сработала защита от ботов')
+            logger.debug('Абн Сработала защита от ботов 1')
             time.sleep(5)
             self.get_urls()
 
@@ -48,7 +48,7 @@ class AbnNewsLoader(MozhaikaLoader):
         header_h1 = data.find_all('p', {'class': 'news__name'})
 
         if len(text_parts) == 0:
-            logger.debug('Сработала защита от ботов')
+            logger.debug('Абн Сработала защита от ботов 2')
             time.sleep(5)
             self.get_text(url_path)
 
